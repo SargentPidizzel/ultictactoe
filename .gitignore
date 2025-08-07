@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Env
+.env
+.env.*
+*.env
+
+# Virtual environment
+env/
+venv/
+ENV/
+.venv/
+.ENV/
+
+# Django stuff
+db.sqlite3
+*.log
+*.pot
+*.pyc
+local_settings.py
+instance/
+media/
+staticfiles/  # für collectstatic Output
+static_root/  # falls du STATIC_ROOT anders nennst
+*.sqlite3
+
+# Tailwind/NPM
+node_modules/
+tailwindcss/
+*.map
+*.css
+*.min.css
+*.min.js
+
+# VSCode & IDEs
+.vscode/
+.idea/
+*.code-workspace
+
+# OS-specific
+.DS_Store
+Thumbs.db
