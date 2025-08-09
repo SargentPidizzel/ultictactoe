@@ -17,12 +17,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
-from ultictactoe_app.views import Game
+from ultictactoe_app.views import Index
 
 urlpatterns = [
+    path("chat/", include("chat_app.urls")),
     path('admin/', admin.site.urls),
     
+    # path("chat/", include("chat_app.urls")),
+    
     path('game/', include('ultictactoe_app.urls')),
-    path("", Game.as_view(), name="game"),
+    path("", Index.as_view(), name="index"),
 
 ]

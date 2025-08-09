@@ -1,0 +1,429 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    {% include 'head.html' %}
+</head>
+
+<body class="bg-[#12181B] text-white">
+    <!-- Inhalt, der geblurt werden soll -->
+    <div class="min-h-screen flex flex-col items-center justify-center space-y-6">
+        <!-- Logo -->
+        <img src="{% static 'img/logo.png' %}" alt="Logo" class="">
+
+        <!-- Button -->
+        <button onclick="openModal('playModal')"
+            class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 text-xl font-semibold rounded-xl shadow-lg transition">
+            Spielen
+        </button>
+    </div>
+
+    <!-- MODAL -->
+    <div id="playModal" class="fixed inset-0 z-50 hidden">
+        <!-- Overlay -->
+        <button data-close aria-label="Overlay schließen"
+            class="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200"></button>
+
+        <!-- Centering Wrapper -->
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <!-- Panel -->
+            <div role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDesc" tabindex="-1"
+                class="w-full max-w-xl transform rounded-3xl bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 shadow-2xl ring-1 ring-black/5 dark:ring-white/10
+             opacity-0 scale-95 transition duration-300">
+
+                <!-- Header -->
+                <div class="flex items-start gap-4 p-6">
+                    <div class="shrink-0 rounded-2xl bg-red-500/10 text-red-600 dark:text-red-400 p-3">
+                        🎮
+                    </div>
+                    <div class="flex-1">
+                        <h2 id="modalTitle" class="text-2xl font-bold tracking-tight">
+                            Spiel starten
+                        </h2>
+                        <p id="modalDesc" class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                            Wähle, ob du ein neues Spiel erstellst oder einem bestehenden beitrittst.
+                        </p>
+                    </div>
+                    <button data-close aria-label="Modal schließen"
+                        class="rounded-xl p-2 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition">
+                        ✕
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="px-6 pb-6">
+                    <div class="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
+                        <button onclick="openModal('joinModal'); closeModal('playModal')"
+                            class="flex-1 rounded-xl bg-red-500 hover:bg-red-600 text-white px-6 py-3 text-base font-semibold shadow-lg transition">
+                            Beitreten
+                        </button>
+                        <button onclick="openModal('createModal'); closeModal('playModal')"
+                            class="flex-1 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 text-base font-semibold shadow-lg transition">
+                            Erstellen
+                        </button>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="my-6 flex items-center gap-3">
+                        <div class="h-px flex-1 bg-neutral-200 dark:bg-neutral-800"></div>
+                        <span class="text-xs uppercase tracking-wider text-neutral-400">oder</span>
+                        <div class="h-px flex-1 bg-neutral-200 dark:bg-neutral-800"></div>
+                    </div>
+
+                    <!-- Secondary -->
+                    <div class="flex justify-center">
+                        <button data-close
+                            class="rounded-lg px-4 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition">
+                            Abbrechen
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="joinModal" class="fixed inset-0 z-50 hidden">
+        <!-- Overlay -->
+        <button data-close aria-label="Overlay schließen"
+            class="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200"></button>
+
+        <!-- Centering Wrapper -->
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <!-- Panel -->
+            <div role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDesc" tabindex="-1"
+                class="w-full max-w-xl transform rounded-3xl bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 shadow-2xl ring-1 ring-black/5 dark:ring-white/10
+             opacity-0 scale-95 transition duration-300">
+
+                <!-- Header -->
+                <div class="flex items-start gap-4 p-6">
+                    <div class="shrink-0 rounded-2xl bg-red-500/10 text-red-600 dark:text-red-400 p-3">
+                        🎮
+                    </div>
+                    <div class="flex-1">
+                        <h2 id="modalTitle" class="text-2xl font-bold tracking-tight">
+                            Spiel beitreten
+                        </h2>
+                        <p id="modalDesc" class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                            Trage hier den Game-Code ein:
+                        </p>
+                    </div>
+                    <button data-close aria-label="Modal schließen"
+                        class="rounded-xl p-2 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition">
+                        ✕
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="px-6 pb-6">
+                    <form id="joinForm" class="space-y-4" onsubmit="handleJoinSubmit(event)">
+                        <!-- Eingabefeld oben -->
+                        <input id="username_join" type="text" placeholder="Username eingeben"
+                            class="w-full rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800
+                                text-neutral-900 dark:text-neutral-100 px-4 py-3 text-base shadow-sm
+                                focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition" />
+                        <input id="joinCode" type="text" placeholder="Game-Code eingeben"
+                            class="w-full rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800
+                                text-neutral-900 dark:text-neutral-100 px-4 py-3 text-base shadow-sm
+                                focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition" />
+
+                        <!-- Beitreten-Button unten -->
+                        <button type="submit"
+                            class="w-full rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 text-base font-semibold shadow-lg transition">
+                            Beitreten
+                        </button>
+                    </form>
+
+                    <div class="my-6 flex items-center gap-3">
+                        <div class="h-px flex-1 bg-neutral-200 dark:bg-neutral-800"></div>
+                        <span class="text-xs uppercase tracking-wider text-neutral-400">oder</span>
+                        <div class="h-px flex-1 bg-neutral-200 dark:bg-neutral-800"></div>
+                    </div>
+
+                    <div class="flex justify-center">
+                        <button data-close
+                            class="rounded-lg px-4 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition">
+                            Abbrechen
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="createModal" class="fixed inset-0 z-50 hidden">
+        <!-- Overlay -->
+        <button data-close aria-label="Overlay schließen"
+            class="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200"></button>
+
+        <!-- Centering Wrapper -->
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <!-- Panel -->
+            <div role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDesc" tabindex="-1"
+                class="w-full max-w-xl transform rounded-3xl bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 shadow-2xl ring-1 ring-black/5 dark:ring-white/10
+             opacity-0 scale-95 transition duration-300">
+
+                <!-- Header -->
+                <div class="flex items-start gap-4 p-6">
+                    <div class="shrink-0 rounded-2xl bg-red-500/10 text-red-600 dark:text-red-400 p-3">
+                        🎮
+                    </div>
+                    <div class="flex-1">
+                        <h2 id="modalTitle" class="text-2xl font-bold tracking-tight">
+                            Spiel erstellen
+                        </h2>
+                        <p id="modalDesc" class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                            Hier kommt dann ein Random game code
+                        </p>
+                    </div>
+                    <button data-close aria-label="Modal schließen"
+                        class="rounded-xl p-2 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition">
+                        ✕
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="px-6 pb-6">
+                    <form id="createForm" class="space-y-4" onsubmit="handleCreateSubmit(event)">
+                        <input id="username_create" type="text" placeholder="Username eingeben"
+                            class="w-full rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800
+                                text-neutral-900 dark:text-neutral-100 px-4 py-3 text-base shadow-sm
+                                focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition" />
+                        <button type="submit"
+                            class="w-full rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 text-base font-semibold shadow-lg transition">
+                            Erstellen
+                        </button>
+                    </form>
+
+                    <div class="my-6 flex items-center gap-3">
+                        <div class="h-px flex-1 bg-neutral-200 dark:bg-neutral-800"></div>
+                        <span class="text-xs uppercase tracking-wider text-neutral-400">oder</span>
+                        <div class="h-px flex-1 bg-neutral-200 dark:bg-neutral-800"></div>
+                    </div>
+
+                    <div class="flex justify-center">
+                        <button data-close
+                            class="rounded-lg px-4 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition">
+                            Abbrechen
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+
+    <div id="lobbyModal" class="fixed inset-0 z-50 hidden">
+        <button data-close
+            class="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200"></button>
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div role="dialog" aria-modal="true"
+                class="w-full max-w-xl transform rounded-3xl bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 shadow-2xl ring-1 ring-black/5 dark:ring-white/10 opacity-0 scale-95 transition duration-300">
+                <div class="flex items-start gap-4 p-6">
+                    <div class="shrink-0 rounded-2xl bg-red-500/10 text-red-600 dark:text-red-400 p-3">🎮</div>
+                    <div class="flex-1">
+                        <h2 class="text-2xl font-bold">Warteraum</h2>
+                        <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Teile den Code mit deinen
+                            Freunden.</p>
+                    </div>
+                    <button data-close
+                        class="rounded-xl p-2 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition">✕</button>
+                </div>
+
+                <div class="px-6 pb-6 space-y-4">
+                    <div class="text-center">
+                        <div class="text-sm text-neutral-400">Game-Code</div>
+                        <div id="createdCode" class="text-3xl font-bold tracking-widest">----</div>
+                        <div class="mt-1 text-sm">
+                            Spieler: <span id="lobbyCount">0</span>/2
+                        </div>
+                        <div id="lobbyStatus" class="mt-2 text-sm text-neutral-400">Verbinde…</div>
+                    </div>
+                    <ul id="playerList" class="space-y-2 border border-neutral-700 rounded-xl p-3 min-h-10"></ul>
+                    <div class="flex justify-between">
+                        <button id="startGame_btn" onclick="closeModal('lobbyModal')"
+                            class="hidden px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600">Spiel starten!</button>
+
+                        <button onclick="leaveLobby(); closeModal('lobbyModal')"
+                            class="px-4 py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600">Abbrechen</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function handleJoinSubmit(e) {
+            e.preventDefault();
+            const code = document.getElementById('joinCode').value.trim();
+            const name_join = document.getElementById('username_join').value;
+            // TODO: optional validieren / Fehler anzeigen
+            console.log('Join-Code:', code);
+            connectToRoom(code, name_join);
+            closeModal("joinModal")
+            openLobbyModal(code);
+            // actionAndClose('join', 'joinModal'); // deine bestehende Funktion
+        }
+    </script>
+
+    <script>
+        let socket = null;
+
+        function wsBase() {
+            return (location.protocol === "https:" ? "wss://" : "ws://") + window.location.host;
+        }
+
+        function handleCreateSubmit(e) {
+            e.preventDefault();
+            const nickname = (document.getElementById('username_create').value || "").trim() || "Spieler";
+            closeModal('createModal');
+            createGame(nickname);   // 1) Code anfordern  2) Raum-WS verbinden  3) Warteraum anzeigen
+        }
+
+        function createGame(nickname) {
+            const alloc = new WebSocket(`${wsBase()}/ws/lobby/`);
+            alloc.onopen = () => alloc.send(JSON.stringify({ action: "request_code" }));
+            alloc.onmessage = (e) => {
+                const msg = JSON.parse(e.data);
+                if (msg.event === "code_allocated") {
+                    const code = msg.code;           // 4-stellig, serverseitig frei
+                    alloc.close();
+                    openLobbyModal(code);
+                    connectToRoom(code, nickname);   // eigentliche Raum-Verbindung
+                }
+            };
+            alloc.onerror = () => alert("Konnte keinen Code anfordern.");
+        }
+
+        function openLobbyModal(code) {
+            document.getElementById('createdCode').textContent = code;
+            renderPlayerList([]);
+            setLobbyStatus("Verbinde…");
+            openModal('lobbyModal');
+        }
+
+        function connectToRoom(roomCode, nickname) {
+            const url = `${wsBase()}/ws/game/${encodeURIComponent(roomCode)}/`;
+            socket = new WebSocket(url);
+            console.log("NICKNAME: ", nickname)
+
+            socket.onopen = () => {
+                console.log('WS open', { roomCode, nickname });
+                socket.send(JSON.stringify({ action: "create_or_join", nickname }));
+                setLobbyStatus(`Verbunden mit Lobby ${roomCode} – warte auf Spieler…`);
+            };
+
+            socket.onmessage = (e) => {
+                const msg = JSON.parse(e.data);
+                console.log('WS message', msg);
+                //    if (msg.event === "player_list") renderPlayerList(msg.players);
+                if (msg.event === "player_list") {
+                    renderPlayerList(msg.players);
+                    updateLobbyCount?.(msg.count ?? msg.players.length);
+                    if ((msg.count ?? msg.players.length) >= 2) {
+                        setLobbyStatus("Alle da! Bereit zum Starten.");
+                        const startBtn = document.getElementById("startGame_btn");
+                        startBtn.classList.remove("hidden");
+                    }
+                }
+                if (msg.event === "joined") console.log('joined; host?', msg.you_are_host);
+            };
+        }
+
+        function leaveLobby() {
+            try { if (socket && socket.readyState === WebSocket.OPEN) socket.close(1000, "leave"); } catch (e) { }
+            socket = null;
+        }
+
+        // UI-Helfer
+        function renderPlayerList(players) {
+            const ul = document.getElementById("playerList");
+            if (!ul) return;
+            ul.innerHTML = "";
+            players.forEach(p => {
+                const li = document.createElement("li");
+                li.textContent = p;
+                ul.appendChild(li);
+            });
+        }
+        function setLobbyStatus(text) {
+            const el = document.getElementById("lobbyStatus");
+            if (el) el.textContent = text;
+        }
+    </script>
+
+    <script>
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            const overlay = modal.querySelector('[data-close].absolute');
+            const panel = modal.querySelector('[role="dialog"]');
+
+            modal.classList.remove('hidden');
+
+            requestAnimationFrame(() => {
+                overlay.classList.add('opacity-100');
+                panel.classList.remove('opacity-0', 'scale-95');
+                panel.classList.add('opacity-100', 'scale-100');
+                document.documentElement.classList.add('overflow-hidden'); // Scroll lock
+            });
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            const overlay = modal.querySelector('[data-close].absolute');
+            const panel = modal.querySelector('[role="dialog"]');
+
+            overlay.classList.remove('opacity-100');
+            panel.classList.remove('opacity-100', 'scale-100');
+            panel.classList.add('opacity-0', 'scale-95');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.documentElement.classList.remove('overflow-hidden');
+            }, 200);
+        }
+
+        function actionAndClose(action, id) {
+            console.log('Action:', action); // z. B. join/create
+            closeModal(id);
+        }
+
+        // Schließen über Overlay/Buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('[data-close]')) {
+                const modal = e.target.closest('.fixed.inset-0');
+                if (modal) closeModal(modal.id);
+            }
+        });
+
+        // ESC schließt
+        document.addEventListener('keydown', (e) => {
+            const openModalEl = document.querySelector('.fixed.inset-0:not(.hidden)');
+            if (openModalEl && e.key === 'Escape') {
+                closeModal(openModalEl.id);
+            }
+        });
+
+
+        function updateLobbyCount(n) {
+            const el = document.getElementById('lobbyCount');
+            if (el) el.textContent = n;
+        }
+
+
+
+
+
+    </script>
+</body>
+
+</html>

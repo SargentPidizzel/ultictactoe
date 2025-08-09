@@ -26,22 +26,31 @@ SECRET_KEY = 'django-insecure-#lljv79pbk*fy4$dl@)y980@my%bp92lxhwh@0^twwoa%-k$*t
 DEBUG = True
 
 ALLOWED_HOSTS = [
+    '10.44.144.181',
+    '127.0.0.1',
     '0.0.0.0:8000',
     'localhost',
+    '192.168.178.126',
 ]
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'tailwind',
+    'theme',
     'ultictactoe_app',
+    'chat_app', 
 ]
+TAILWIND_APP_NAME = 'theme'
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -120,7 +129,29 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+
+# Füge diesen Eintrag hinzu, um zusätzliche Verzeichnisse für statische Dateien anzugeben:
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+ASGI_APPLICATION = "ultictactoe.asgi.application"
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
+
+
+APP_NAME = "UlTicTacToe"
+APP_VERSION = "v0.000.001"

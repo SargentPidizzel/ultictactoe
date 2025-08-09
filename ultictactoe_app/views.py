@@ -7,3 +7,9 @@ class Game(View):
     def get(self, request):
 
         return render(request, 'game.html')
+    
+    
+class Index(View):
+    def get(self, request):
+
+        return render(request, 'index.html')
