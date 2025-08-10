@@ -250,33 +250,49 @@
                     </div>
                     <ul id="playerList" class="space-y-2 border border-neutral-700 rounded-xl p-3 min-h-10"></ul>
                     <div class="flex justify-between">
-                        <button id="startGame_btn" onclick="closeModal('lobbyModal')"
-                            class="hidden px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600">Spiel starten!</button>
-
                         <button onclick="leaveLobby(); closeModal('lobbyModal')"
-                            class="px-4 py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600">Abbrechen</button>
+                            class="px-4 py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600">
+                            Abbrechen
+                        </button>
+
+                        <button id="startGame_btn" onclick="closeModal('lobbyModal')"
+                            class="hidden px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600">
+                            Spiel starten!
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    {% include 'js.html' %}
+
+
     <script>
+        // function handleJoinSubmit(e) {
+        //     e.preventDefault();
+        //     const code = document.getElementById('joinCode').value.trim();
+        //     const name_join = document.getElementById('username_join').value;
+        //     // TODO: optional validieren / Fehler anzeigen
+        //     console.log('Join-Code:', code);
+        //     connectToRoom(code, name_join);
+        //     closeModal("joinModal")
+        //     openLobbyModal(code);
+        //     // actionAndClose('join', 'joinModal'); // deine bestehende Funktion
+        // }
         function handleJoinSubmit(e) {
             e.preventDefault();
             const code = document.getElementById('joinCode').value.trim();
             const name_join = document.getElementById('username_join').value;
-            // TODO: optional validieren / Fehler anzeigen
-            console.log('Join-Code:', code);
+
             connectToRoom(code, name_join);
-            closeModal("joinModal")
-            openLobbyModal(code);
-            // actionAndClose('join', 'joinModal'); // deine bestehende Funktion
+            closeModal("joinModal");
+            // ❌ openLobbyModal(code);   // <-- ENTFERNEN
         }
     </script>
 
     <script>
-        let socket = null;
+        // let socket = null;
 
         function wsBase() {
             return (location.protocol === "https:" ? "wss://" : "ws://") + window.location.host;
@@ -295,10 +311,10 @@
             alloc.onmessage = (e) => {
                 const msg = JSON.parse(e.data);
                 if (msg.event === "code_allocated") {
-                    const code = msg.code;           // 4-stellig, serverseitig frei
-                    alloc.close();
-                    openLobbyModal(code);
-                    connectToRoom(code, nickname);   // eigentliche Raum-Verbindung
+                const code = msg.code;
+                alloc.close();
+                // ❌ openLobbyModal(code);  // <-- ENTFERNEN
+                connectToRoom(code, nickname);
                 }
             };
             alloc.onerror = () => alert("Konnte keinen Code anfordern.");
@@ -312,30 +328,61 @@
         }
 
         function connectToRoom(roomCode, nickname) {
+            window.myNickname = nickname;
+            localStorage.setItem("nickname", nickname);
             const url = `${wsBase()}/ws/game/${encodeURIComponent(roomCode)}/`;
             socket = new WebSocket(url);
             console.log("NICKNAME: ", nickname)
 
             socket.onopen = () => {
-                console.log('WS open', { roomCode, nickname });
+                console.log('WS open', { roomCode, nickname});
                 socket.send(JSON.stringify({ action: "create_or_join", nickname }));
                 setLobbyStatus(`Verbunden mit Lobby ${roomCode} – warte auf Spieler…`);
             };
 
             socket.onmessage = (e) => {
                 const msg = JSON.parse(e.data);
-                console.log('WS message', msg);
-                //    if (msg.event === "player_list") renderPlayerList(msg.players);
+
+                if (msg.event === "joined") {
+                    window.myId = msg.your_id;            // falls du das wie besprochen sendest
+                    // jetzt ist der Join bestätigt -> Lobby anzeigen
+                    openLobbyModal(msg.room);
+                    console.log('joined; host?', msg.you_are_host);
+                }
+
                 if (msg.event === "player_list") {
                     renderPlayerList(msg.players);
                     updateLobbyCount?.(msg.count ?? msg.players.length);
-                    if ((msg.count ?? msg.players.length) >= 2) {
-                        setLobbyStatus("Alle da! Bereit zum Starten.");
-                        const startBtn = document.getElementById("startGame_btn");
-                        startBtn.classList.remove("hidden");
+
+                    const startBtn = document.getElementById("startGame_btn");
+                    const iAmHost = window.myId && msg.players.some(p => p.id === window.myId && p.is_host);
+                    if (iAmHost && (msg.count ?? msg.players.length) >= 2) {
+                    startBtn.classList.remove("hidden");
+                    } else {
+                    startBtn.classList.add("hidden");
                     }
                 }
-                if (msg.event === "joined") console.log('joined; host?', msg.you_are_host);
+
+                if (msg.event === "error") {
+                    // sicherstellen, dass keine leere Lobby offen bleibt
+                    closeModal('lobbyModal');
+                    alert(msg.message);                  // oder eigenes Fehler-UI
+                    // optional: Join/Create-Modal wieder öffnen
+                    openModal('playModal');
+                }
+
+                if (msg.event === "start") {
+                    // optional: Modal schließen
+                    closeModal('lobbyModal');
+                    // Weiterleitung
+                    window.location.href = msg.url;
+                }
+            };
+
+            socket.onclose = () => {
+                // wenn aus irgendeinem Grund geschlossen wurde, bevor joined kam:
+                const lobbyOpen = !document.getElementById('lobbyModal').classList.contains('hidden');
+                if (lobbyOpen && !window.myId) closeModal('lobbyModal');
             };
         }
 
@@ -349,9 +396,21 @@
             const ul = document.getElementById("playerList");
             if (!ul) return;
             ul.innerHTML = "";
+
             players.forEach(p => {
                 const li = document.createElement("li");
-                li.textContent = p;
+                // Name setzen
+                li.textContent = p.name;
+
+                // Krone nur für den *einen* Host
+                if (p.is_host) {
+                    const icon = document.createElement("i");
+                    icon.className = "fa-solid fa-crown text-yellow-400";
+                    icon.style.marginLeft = "0.4rem";
+                    li.appendChild(icon);
+                    // document.getElementById("startGame_btn").classList.remove("hidden")
+                }
+
                 ul.appendChild(li);
             });
         }
@@ -418,6 +477,11 @@
             const el = document.getElementById('lobbyCount');
             if (el) el.textContent = n;
         }
+
+        // Um den klick auf den Start Game Button zu registrieren
+        document.getElementById("startGame_btn")?.addEventListener("click", () => {
+            socket?.send(JSON.stringify({ action: "start_game" }));
+        });
 
 
 

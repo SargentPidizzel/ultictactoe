@@ -4,7 +4,8 @@ from django.urls import path
 from ultictactoe_app.views import Game, Index
 
 urlpatterns = [
-    path("test/", Game.as_view(), name="game"),
+    path("lobby/", Game.as_view(), name="game"),
+    path("lobby/<int:room_code>/", Game.as_view(), name="game_view"),
     path("", Index.as_view(), name="index"),
     
 ]
