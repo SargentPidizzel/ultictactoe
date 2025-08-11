@@ -348,6 +348,7 @@
                     // jetzt ist der Join bestätigt -> Lobby anzeigen
                     openLobbyModal(msg.room);
                     console.log('joined; host?', msg.you_are_host);
+                    // console.log('Currentplayer: ', msg.currentplayer);
                 }
 
                 if (msg.event === "player_list") {
