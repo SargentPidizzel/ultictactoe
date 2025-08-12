@@ -114,6 +114,8 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
                     "board": {i: {} for i in range(9)},
                     "phase": "lobby",
                     "currentPlayer": "X",   # <-- hier!
+                    "big_field_to_click": "",
+                    "finished_fields": [],
                 }
 
             room = rooms[self.room]
@@ -168,6 +170,8 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
             # room["board"] = set()
             room["board"] = {i: {} for i in range(9)}   # statt: set()
             room["currentPlayer"] = "X"
+            print("Start Spiel")
+            # room[""]
 
             game_url = f"/play/lobby/{self.room}/"  # oder dein Game-Pfad
             await self.channel_layer.group_send(
@@ -201,6 +205,12 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
             #     await self.send(text_data=json.dumps({"event":"error","message":"Spiel läuft nicht."}))
             #     return
 
+            # Field to click in rooms speichern und dann prüfen, ob Big gleich ist. Wenn ja go, sonst nichts
+            
+            big_field_to_click = room["big_field_to_click"]
+            print("Jetzt anklicken: ", big_field_to_click)
+            
+
             try:
                 big = int(data.get("big"))
                 small = int(data.get("small"))
@@ -210,35 +220,44 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
             if not (0 <= big <= 8 and 0 <= small <= 8):
                 await self.send(text_data=json.dumps({"event":"error","message":"Außerhalb des Boards."}))
                 return
-
-            board = room.setdefault("board", {i: {} for i in range(9)})   # dict→dict
-            current_player = room.setdefault("currentPlayer", "X")
-
-            if small in board[big]:
-                await self.send(text_data=json.dumps({"event":"error","message":"Feld bereits belegt."}))
-                return
-
-            # Zug eintragen
-            board[big][small] = current_player
             
-            print("Board: ", board)
+            if big_field_to_click == "" or big == big_field_to_click:
 
-            # Spieler wechseln und persistieren
-            room["currentPlayer"] = "O" if current_player == "X" else "X"
+                board = room.setdefault("board", {i: {} for i in range(9)})   # dict→dict
+                current_player = room.setdefault("currentPlayer", "X")
 
-            # Inkrementell broadcasten (kein Dict serialisieren)
-            await self.channel_layer.group_send(
-                self.group,
-                {
-                    "type": "game.move",
-                    "big": big,
-                    "small": small,
-                    "symbol": current_player,               # was wurde gesetzt
-                    "currentPlayer": room["currentPlayer"], # wer ist jetzt dran
-                },
-            )
+                if small in board[big]:
+                    await self.send(text_data=json.dumps({"event":"error","message":"Feld bereits belegt."}))
+                    return
+
+                # Zug eintragen
+                board[big][small] = current_player
+                room["big_field_to_click"] = small
+                print("Im nächsten Zug anklicken: ", room["big_field_to_click"])
+                
+                print("Board: ", room["board"])
+
+                # Spieler wechseln und persistieren
+                room["currentPlayer"] = "O" if current_player == "X" else "X"
+
+                # Inkrementell broadcasten (kein Dict serialisieren)
+                await self.channel_layer.group_send(
+                    self.group,
+                    {
+                        "type": "game.move",
+                        "big": big,
+                        "small": small,
+                        "symbol": current_player,               # was wurde gesetzt
+                        "currentPlayer": room["currentPlayer"], # wer ist jetzt dran
+                    },
+                )
+            else:
+                print("Klick ins richtige Feld!")
 
         # Weitere Actions (start/move/leave) kommen später
+        
+    # def checkWin():
+    #     return
 
     async def _broadcast_players(self):
         room = rooms.get(self.room)

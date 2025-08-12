@@ -329,8 +329,14 @@
                     console.log("Ein zug auf Feld ", msg.big, msg.small);
                     let id = msg.big + "_" + msg.small
 
+                    let field_to_click_id = "field_" + msg.small;
+                    const next_big_field = document.getElementById(field_to_click_id);
+
+                    let clicked_big_field_id = "field_" + msg.big;
+                    const clicked_big_field = document.getElementById(clicked_big_field_id);
+
                     console.log("ID: ", id)
-                    console.log("Game ", msg.board)
+                    console.log("MSG ", msg)
                     console.log("Player ", msg.currentPlayer)
 
                     document.getElementById("playerSpan").innerText = msg.currentPlayer
@@ -384,6 +390,14 @@
                             'hover:shadow-green-400'
                         );
                     }
+
+                    clicked_big_field.classList.remove('ring-red-500', 'shadow-lg', 'shadow-red-500/50')
+                    next_big_field.classList.add('ring-red-500', 'shadow-lg', 'shadow-red-500/50');
+
+                    // next_big_field.classList.add(
+                       
+
+                    // )
 
                     // field.innerText = field_symbol
 
