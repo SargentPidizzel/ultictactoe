@@ -16,41 +16,72 @@ LINES = [
     (0,4,8),(2,4,6),          # Diagonalen
 ]
 
-def small_board_result(small_board: dict) -> str | None:
+def _winner_in(arr):
     """
-    Ermittelt das Ergebnis eines kleinen Boards.
-    Rückgabe:
-        'X' oder 'O' -> Gewinner
-        'T'          -> Unentschieden (Tie)
-        None         -> noch offen
-    small_board ist dict: {pos(0..8): 'X'|'O'}
+    arr: Liste der Länge 9 mit Werten "X", "O" oder None.
+    Gibt (winner, line) zurück, z. B. ("X", (0,1,2)) oder (None, None).
     """
-    for a,b,c in LINES:
-        va = small_board.get(a)
-        if va and va == small_board.get(b) == small_board.get(c):
-            return va  # 'X' oder 'O'
-    if len(small_board) == 9:
-        return 'T'  # voll, kein Dreier
-    return None
+    for a, b, c in LINES:
+        v = arr[a]
+        if v and v == arr[b] == arr[c]:
+            return v, (a, b, c)
+    return None, None
 
-def big_board_result(big_results: dict[int, str | None]) -> str | None:
+def small_result(cells: dict):
     """
-    Ermittelt das Gesamtergebnis des großen Boards auf Basis der
-    Ergebnisse der 9 kleinen Boards (X/O/T/None).
+    cells: Dict eines kleinen Feldes, z. B. {0:"X", 4:"X", 8:"X"}.
     Rückgabe:
-        'X' oder 'O' -> Gesamtsieger
-        'T'          -> Gesamt-Unentschieden
-        None         -> noch offen
+      ("win", "X", (0,4,8))  -> Spieler X hat gewonnen (mit Linie)
+      ("draw", None, None)   -> alle 9 Felder belegt, kein Gewinner
+      ("ongoing", None, None)-> noch nicht entschieden
     """
-    # Für Sieg zählen nur echte Siege ('X'/'O') in den Linien
-    for a,b,c in LINES:
-        va = big_results.get(a)
-        if va in ('X','O') and va == big_results.get(b) == big_results.get(c):
-            return va
-    # Gesamt-Remis, wenn alle 9 Felder abgeschlossen (X/O/T) und kein Sieger
-    if all(big_results.get(i) in ('X','O','T') for i in range(9)):
-        return 'T'
-    return None
+    arr = [cells.get(i) for i in range(9)]  # index 0..8
+    w, line = _winner_in(arr)
+    if w:
+        return "win", w, line
+    if all(v in ("X", "O") for v in arr):
+        return "draw", None, None
+    return "ongoing", None, None
+
+def _is_big_finished(rm, big_idx): #rm ist room
+    # direkt aus finished_fields lesen (schnell)
+    if big_idx in rm.get("finished_fields", {}):
+        return True
+    # falls noch nicht eingetragen: aktuellen Zustand berechnen
+    st, _, _ = small_result(rm.get("board", {}).get(big_idx, {}))
+    return st in ("win", "draw")
+
+
+def big_board_winner(finished_fields: dict):
+    """
+    Prüft, ob X/O das große 3x3-Brett gewonnen hat.
+    finished_fields: {big_index: "X"/"O"/"D"}
+    Rückgabe:
+      ("X", (0,1,2))  -> X hat gewonnen (Gewinnlinie)
+      ("O", (2,4,6))  -> O hat gewonnen
+      (None, None)    -> noch kein Gesamtsieg
+    """
+    arr = [
+        finished_fields.get(i) if finished_fields.get(i) in ("X", "O") else None
+        for i in range(9)
+    ]
+    # nutzt deine bestehende LINES-Logik
+    for a, b, c in LINES:
+        v = arr[a]
+        if v and v == arr[b] == arr[c]:
+            return v, (a, b, c)
+    return None, None
+
+def is_global_draw(finished_fields: dict) -> bool:
+    """
+    Globales Unentschieden: alle 9 Großfelder sind entschieden (X/O/D),
+    aber kein Spieler hat das große Brett gewonnen.
+    """
+    if len(finished_fields) < 9:
+        return False
+    w, _ = big_board_winner(finished_fields)
+    return w is None
+
 
 
 
@@ -153,7 +184,7 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
                     "phase": "lobby",
                     "currentPlayer": "X",   # <-- hier!
                     "big_field_to_click": "",
-                    "finished_fields": [],
+                    "finished_fields": {},
                 }
 
             room = rooms[self.room]
@@ -239,13 +270,15 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
             room = rooms.get(self.room)
             if not room:
                 return
-
             # if room.get("phase") != "playing":
             #     await self.send(text_data=json.dumps({"event":"error","message":"Spiel läuft nicht."}))
             #     return
 
-            big_field_to_click = room.get("big_field_to_click", "")
+            # Field to click in rooms speichern und dann prüfen, ob Big gleich ist. Wenn ja go, sonst nichts
+            
+            big_field_to_click = room["big_field_to_click"]
             print("Jetzt anklicken: ", big_field_to_click)
+            
 
             try:
                 big = int(data.get("big"))
@@ -253,84 +286,113 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
             except (TypeError, ValueError):
                 await self.send(text_data=json.dumps({"event":"error","message":"Ungültiger Zug."}))
                 return
-
             if not (0 <= big <= 8 and 0 <= small <= 8):
                 await self.send(text_data=json.dumps({"event":"error","message":"Außerhalb des Boards."}))
                 return
+            
+            if big_field_to_click == "" or big == big_field_to_click: #Prüfen ob das angeklickte Feld auch das richtige war
 
-            if big_field_to_click != "" and big != big_field_to_click:
-                print("Klick ins richtige Feld!")
-                await self.send(text_data=json.dumps({"event":"error","message":"Bitte im vorgegebenen Großfeld spielen."}))
-                return
+                board = room.setdefault("board", {i: {} for i in range(9)})   # dict→dict
+                current_player = room.setdefault("currentPlayer", "X")
 
-            board = room.setdefault("board", {i: {} for i in range(9)})                # {int: {int: 'X'|'O'}}
-            big_results = room.setdefault("big_results", {i: None for i in range(9)})  # {int: 'X'|'O'|'T'|None}
-            current_player = room.setdefault("currentPlayer", "X")
+                finished_fields = room["finished_fields"]
+                print("Finished_fields: ", finished_fields)
 
-            if big_results.get(big) in ('X', 'O', 'T'):
-                await self.send(text_data=json.dumps({"event":"error","message":"Dieses Großfeld ist bereits abgeschlossen."}))
-                return
+                if big in finished_fields:
+                    print("FELD IST BELEGT")
+                    await self.send(text_data=json.dumps({"event":"error","message":"Das große Feld ist bereits belegt."}))
+                    return
 
-            if small in board[big]:
-                await self.send(text_data=json.dumps({"event":"error","message":"Feld bereits belegt."}))
-                return
+                if small in board[big]:
+                    await self.send(text_data=json.dumps({"event":"error","message":"Feld bereits belegt."}))
+                    return
 
-            # Zug eintragen
-            board[big][small] = current_player
+                # Zug eintragen
+                board[big][small] = current_player
+                
 
-            # Kleines Board auswerten
-            res_small = small_board_result(board[big])   # 'X'|'O'|'T'|None
-            if res_small and big_results[big] is None:
-                big_results[big] = res_small
 
-            # Gesamtergebnis prüfen
-            res_big = big_board_result(big_results)      # 'X'|'O'|'T'|None
+                state, small_win, small_line = small_result(board[big])
 
-            # Nächstes Pflicht-Großfeld
-            next_big = small
-            if big_results.get(next_big) in ('X', 'O', 'T') or len(board[next_big]) == 9:
-                next_big = ""  # freie Wahl
-            room["big_field_to_click"] = next_big
 
-            print("Im nächsten Zug anklicken: ", room["big_field_to_click"])
-            print("Board: ", room["board"])
+                if state == "win":
+                    # txt = small_win + " hat das feld "+ big + " gewonnen"
+                    print(small_win , " hat das feld ", big , " gewonnen")
+                    # kleines Feld 'big' ist gewonnen von small_win ("X"/"O")
+                    # -> hier kannst du z. B. markieren oder ein Event senden
+                    room["finished_fields"][big] = small_win
+                    # await self.channel_layer.group_send(... "small_over" ...)
+                    pass
+                elif state == "draw":
+                    # kleines Feld 'big' ist unentschieden
+                    # print(small_win + " endet unentschieden")
+                    room["finished_fields"][big] = "D"
+                    pass
+                else:
+                    # "ongoing" – noch kein Abschluss
+                    pass
+                
+                print("Board: ", room["board"])
+                next_big = small
 
-            # Spieler wechseln, falls nicht beendet
-            if res_big is None:
+                # Spieler wechseln und persistieren
                 room["currentPlayer"] = "O" if current_player == "X" else "X"
 
-            # ❗ Serializer-Fix: Keys als Strings serialisieren
-            big_results_json = {str(k): v for k, v in big_results.items()}
 
-            await self.channel_layer.group_send(
-                self.group,
-                {
-                    "type": "game.move",
-                    "big": big,
-                    "small": small,
-                    "symbol": current_player,
-                    "currentPlayer": room["currentPlayer"] if res_big is None else None,
-                    "bigFieldToClick": room["big_field_to_click"],
-                    "smallBoardResult": res_small,
-                    "bigResults": big_results_json,  # ← string keys!
-                },
-            )
+                if _is_big_finished(room, next_big):
+                    # Ziel-Großfeld ist fertig -> freier Zug
+                    room["big_field_to_click"] = ""
+                else:
+                    room["big_field_to_click"] = next_big
 
-            if res_big is not None:
-                room["phase"] = "ended"
-                room["big_field_to_click"] = ""
 
-                # (Optional) auch hier stringifizierte Keys senden
-                big_results_json = {str(k): v for k, v in big_results.items()}
+                winner, big_line = big_board_winner(room["finished_fields"])
+
+                # Optional: globales Unentschieden (alle 9 großfelder fertig, aber kein Sieger)
+                if not winner and is_global_draw(room["finished_fields"]):
+                    winner, big_line = "D", None
+                    room["phase"] = "finished"
+                    room["big_field_to_click"] = ""
+                else:
+                    if winner:
+                        room["phase"] = "finished"
+                        room["big_field_to_click"] = ""
+
+               
+                # room["big_field_to_click"] = next_big
+                print("Im nächsten Zug anklicken: ", room["big_field_to_click"])
+
+                # Inkrementell broadcasten (kein Dict serialisieren)
+                finished_fields_list = [
+                    {"big": int(b), "winner": w}
+                    for b, w in room.get("finished_fields", {}).items()
+                ]
+
                 await self.channel_layer.group_send(
                     self.group,
                     {
-                        "type": "game.over",
-                        "winner": res_big if res_big in ("X", "O") else None,
-                        "draw": True if res_big == "T" else False,
-                        "bigResults": big_results_json,
+                        "type": "game.move",
+                        "big": int(big),
+                        "small": int(small),
+                        "symbol": current_player,
+                        "currentPlayer": room["currentPlayer"],
+                        "finished_fields": finished_fields_list,  # <--- LISTE statt Dict
                     },
                 )
+
+                # 2) Falls Gesamtsieg / globaler Draw
+                if winner:
+                    await self.channel_layer.group_send(
+                        self.group,
+                        {
+                            "type": "game.over",
+                            "winner": winner,                            # "X" / "O" / "D"
+                            "line": list(big_line) if big_line else None # große Sieglinie
+                        },
+                    )
+
+            else:
+                print("Klick ins richtige Feld!")
 
 
         # Weitere Actions (start/move/leave) kommen später
@@ -364,6 +426,16 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
             "url": event["url"]
         }))
 
+    # async def game_move(self, event):
+    #     await self.send(text_data=json.dumps({
+    #         "event": "move",
+    #         "big": event["big"],
+    #         "small": event["small"],
+    #         "symbol": event["symbol"],
+    #         "currentPlayer": event["currentPlayer"],
+    #         "finished_fields": event["finished_fields"],
+    #     }))
+
     async def game_move(self, event):
         await self.send(text_data=json.dumps({
             "event": "move",
@@ -371,6 +443,15 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
             "small": event["small"],
             "symbol": event["symbol"],
             "currentPlayer": event["currentPlayer"],
+            # event["finished_fields"] ist jetzt eine Liste von {big, winner}
+            "finished_fields": event.get("finished_fields", []),
+        }))
+
+    async def game_over(self, event):
+        await self.send(text_data=json.dumps({
+            "event": "game_over",
+            "winner": event["winner"],   # "X" / "O" / "D"
+            "line": event["line"],       # [a,b,c] auf dem großen Brett oder null
         }))
     
     # await self.send(text_data=json.dumps({
