@@ -394,6 +394,37 @@
                     clicked_big_field.classList.remove('ring-red-500', 'shadow-lg', 'shadow-red-500/50')
                     next_big_field.classList.add('ring-red-500', 'shadow-lg', 'shadow-red-500/50');
 
+
+                    console.log(msg.bigResults)
+                    if (msg.bigResults) {
+                    // Gewonnene Großfelder ring/Glow markieren (nur Utilities, kein eigenes CSS)
+                        Object.entries(msg.bigResults || {}).forEach(([bigIndex, result]) => {
+                        const fieldBig = document.getElementById(`field_${bigIndex}`);
+                        if (!fieldBig) return;
+
+                        // Alte Ringe/Umrandungen/Glows entfernen (aber NICHT das Grid/Rounded/etc.)
+                        fieldBig.classList.remove(
+                            'ring-2','ring-4','ring-white','ring-red-500','ring-green-500','ring-slate-500',
+                            'border-4','border-red-500','border-green-500','border-slate-500',
+                            'shadow-lg','shadow-red-500/50','shadow-green-500/50','shadow-slate-500/50'
+                        );
+
+                        if (result === 'X') {
+                            // Roter Gewinner-Ring + roter Glow
+                            fieldBig.classList.add('ring-4','ring-red-500','shadow-lg','shadow-red-500/50');
+                        } else if (result === 'O') {
+                            // Grüner Gewinner-Ring + grüner Glow
+                            fieldBig.classList.add('ring-4','ring-green-500','shadow-lg','shadow-green-500/50');
+                        } else if (result === 'T') {
+                            // Unentschieden neutral (kein Tailwind-dashed-Ring ohne Custom-CSS)
+                            fieldBig.classList.add('border-4','border-slate-500');
+                        } else {
+                            // Nicht entschieden -> Standardzustand
+                            fieldBig.classList.add('ring-2','ring-white');
+                        }
+                        });
+                    }
+
                     // next_big_field.classList.add(
                        
 
