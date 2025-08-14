@@ -404,6 +404,31 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
             else:
                 print("Klick ins richtige Feld!")
 
+        elif action == "reset":
+            room = rooms.get(self.room)
+            if not room:
+                return
+
+            # Spiellogik zurücksetzen
+            room["board"] = {i: {} for i in range(9)}
+            room["finished_fields"] = {}
+            room["big_field_to_click"] = ""
+            room["currentPlayer"] = "X"
+            room["phase"] = "playing"
+
+            # Broadcast an alle Spieler
+            await self.channel_layer.group_send(
+                self.group,
+                {
+                    "type": "game.reset",
+                    "board": [],
+                    "currentPlayer": room["currentPlayer"],
+                    "finished_fields": [],
+                    "big_field_to_click": room["big_field_to_click"],
+                    "message": "Spiel wurde neugestartet.",
+                }
+            )
+
 
         # Weitere Actions (start/move/leave) kommen später
         
@@ -464,13 +489,15 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
             "line": event["line"],       # [a,b,c] auf dem großen Brett oder null
         }))
     
-    # await self.send(text_data=json.dumps({
-    #     "event": "joined",
-    #     "room": self.room,
-    #     "you_are_host": (room["host"] == self.channel_name),
-    #     "your_id": self.channel_name,
-    #     "phase": room.get("phase", "lobby"),
-    #     "board": sorted(list(room.get("board", set()))),  # <- wichtig
-    # }))
+   
+    async def game_reset(self, event):
+        await self.send(text_data=json.dumps({
+            "event": "reset",
+            "message": event.get("message"),
+            "board": event.get("board", []),
+            "currentPlayer": event.get("currentPlayer", "X"),
+            "finished_fields": event.get("finished_fields", []),
+            "big_field_to_click": event.get("big_field_to_click", ""),
+        }))
 
     

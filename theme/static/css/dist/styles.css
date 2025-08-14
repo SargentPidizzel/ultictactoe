@@ -937,6 +937,10 @@ select {
   width: 100%;
 }
 
+.w-\[min\(92vw\2c 32rem\)\] {
+  width: min(92vw,32rem);
+}
+
 .max-w-2xl {
   max-width: 42rem;
 }
@@ -1003,6 +1007,10 @@ select {
 
 .grid-cols-3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .flex-col {
@@ -1212,6 +1220,10 @@ select {
 
 .bg-white\/5 {
   background-color: rgb(255 255 255 / 0.05);
+}
+
+.bg-emerald-600\/90 {
+  background-color: rgb(5 150 105 / 0.9);
 }
 
 .bg-gradient-to-br {
@@ -1445,6 +1457,11 @@ select {
 .text-yellow-400 {
   --tw-text-opacity: 1;
   color: rgb(250 204 21 / var(--tw-text-opacity, 1));
+}
+
+.text-slate-400 {
+  --tw-text-opacity: 1;
+  color: rgb(148 163 184 / var(--tw-text-opacity, 1));
 }
 
 .antialiased {

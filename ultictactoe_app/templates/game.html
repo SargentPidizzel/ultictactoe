@@ -282,25 +282,67 @@
     </div>
 
     <!-- Dialog -->
-    <dialog id="rulesDialog" class="rounded-2xl bg-slate-900 text-slate-100 p-0 w-[min(92vw,48rem)]">
-        <div class="p-5">
-            <h2 class="text-lg font-semibold">Kurz erklärt</h2>
-            <ol class="mt-3 list-decimal pl-5 space-y-2 text-sm text-slate-300">
-                <li>Das Spielfeld besteht aus 9 Großfeldern (3×3). Jedes Großfeld ist ein eigenes Tic-Tac-Toe (3×3).
-                </li>
-                <li>Dein Zug in einem Kleinfeld bestimmt, in welches Großfeld der/die Nächste setzen muss (Position
-                    0–8).</li>
-                <li>Ist dieses Großfeld bereits voll oder gewonnen, darf frei in einem beliebigen offenen Großfeld
-                    gesetzt werden.</li>
-                <li>Ein Großfeld gilt als gewonnen, wenn darin eine 3er-Reihe erreicht wurde. Ziel ist 3 gewonnene
-                    Großfelder in einer Reihe.</li>
-            </ol>
-            <div class="mt-4 flex justify-end gap-2">
-                <button
-                    class="rounded-xl bg-transparent border border-white/25 px-3 py-2 text-sm font-medium hover:bg-white/10 smooth"
-                    onclick="this.closest('dialog').close()">Schließen</button>
-            </div>
+    <dialog id="rulesDialog"
+      class="rounded-2xl bg-slate-900 text-slate-100 p-0 w-[min(92vw,32rem)]
+            backdrop:bg-black/50 backdrop:backdrop-blur-sm">
+      <div class="p-6 space-y-4">
+        <h2 class="text-xl font-semibold">Kurz erklärt</h2>
+
+        <div class="rounded-xl bg-white/5 ring-1 ring-white/10 p-4 max-h-[60vh] overflow-auto">
+          <ol class="list-decimal pl-5 space-y-2 text-sm text-slate-300">
+            <li>Das Spielfeld besteht aus 9 Großfeldern (3×3). Jedes Großfeld ist ein eigenes Tic-Tac-Toe (3×3).</li>
+            <li>Dein Zug in einem Kleinfeld bestimmt, in welches Großfeld der/die Nächste setzen muss (Position 0–8).</li>
+            <li>Ist dieses Großfeld bereits voll oder gewonnen, darf frei in einem beliebigen offenen Großfeld gesetzt werden.</li>
+            <li>Ein Großfeld gilt als gewonnen, wenn darin eine 3er-Reihe erreicht wurde. Ziel ist 3 gewonnene Großfelder in einer Reihe.</li>
+          </ol>
         </div>
+
+        <div class="mt-2 flex justify-end">
+          <button
+            class="rounded-xl bg-transparent border border-white/25 px-3 py-2 text-sm font-medium hover:bg-white/10 smooth"
+            onclick="this.closest('dialog').close()">
+            Schließen
+          </button>
+        </div>
+      </div>
+    </dialog>
+
+
+
+    <!-- Game-Over Modal -->
+    <dialog id="gameOverDialog" class="rounded-2xl bg-slate-900 text-slate-100 p-0 w-[min(92vw,32rem)] backdrop:bg-black/50 backdrop:backdrop-blur-sm">
+      <div class="p-6 space-y-4">
+        <h2 class="text-xl font-semibold">Spiel beendet</h2>
+
+        <div class="rounded-xl bg-white/5 ring-1 ring-white/10 p-4">
+          <p class="text-sm text-slate-300">Sieger</p>
+          <p id="go_winner" class="mt-1 text-2xl font-bold"></p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="rounded-xl bg-white/5 ring-1 ring-white/10 p-3">
+            <p class="text-xs text-slate-400">Spieler X</p>
+            <p id="go_player_x" class="text-lg font-semibold">Unbekannt</p>
+          </div>
+          <div class="rounded-xl bg-white/5 ring-1 ring-white/10 p-3">
+            <p class="text-xs text-slate-400">Spieler O</p>
+            <p id="go_player_o" class="text-lg font-semibold">Unbekannt</p>
+          </div>
+        </div>
+
+        <div class="mt-2 flex justify-end gap-2">
+          <button id="go_quit_btn"
+            class="rounded-xl bg-transparent border border-white/25 px-3 py-2 text-sm font-medium hover:bg-white/10 smooth"
+            type="button">
+            Beenden
+          </button>
+          <button id="go_restart_btn"
+            class="rounded-xl bg-emerald-600/90 px-3 py-2 text-sm font-semibold hover:bg-emerald-600 smooth"
+            type="button">
+            Neustart
+          </button>
+        </div>
+      </div>
     </dialog>
 
     {% include 'js.html' %}
@@ -382,9 +424,10 @@
                     window.currentPlayer = msg.currentPlayer; // "X" oder "O"
                     const allSmalls = document.querySelectorAll(".small-field");
 
-                    console.log("CurrentPlayer", window,currentPlayer)
-                    console.log("mySymbol", window,mySymbol)
+                    console.log("CurrentPlayer", window.currentPlayer)
+                    console.log("mySymbol", window.mySymbol)
                     
+
                     // if (window.currentPlayer && window.mySymbol && window.currentPlayer !== window.mySymbol) {
                     //     console.log("Nicht dein Zug.");
                     //     return;
@@ -453,8 +496,8 @@
                   }
 
 
-                    console.log("Ein zug auf Feld ", msg.big, msg.small);
-                    let id = msg.big + "_" + msg.small
+                    // console.log("Ein zug auf Feld ", msg.big, msg.small);
+                    // let id = msg.big + "_" + msg.small
                     
 
                     let field_to_click_id = "field_" + msg.small;
@@ -465,9 +508,9 @@
 
                     
 
-                    console.log("ID: ", id)
-                    console.log("MSG ", msg)
-                    console.log("Player ", msg.currentPlayer)
+                    // console.log("ID: ", id)
+                    // console.log("MSG ", msg)
+                    // console.log("Player ", msg.currentPlayer)
 
                     if(msg.currentPlayer == window.mySymbol){
                         document.getElementById("status").innerText = "Du bist am zug"
@@ -476,7 +519,7 @@
 
                     }
 
-                    const field = document.getElementById(id);
+                    const field = document.getElementById(`${msg.big}_${msg.small}`);
 
                     field.innerText = msg.symbol
 
@@ -526,11 +569,11 @@
 
                     
 
-                    console.log("Results: " , msg.finished_fields)
+                    // console.log("Results: " , msg.finished_fields)
                     if(msg.finished_fields){
                       for(i = 0; i < msg.finished_fields.length; i++){
                         const field_data = msg.finished_fields[i];
-                        console.log("Fielddata: ",field_data);
+                        // console.log("Fielddata: ",field_data);
                         let field_id = "field_"
 
                         if(field_data["winner"] == "X"){
@@ -552,11 +595,58 @@
 
                 if (msg.event === "game_over") {
                     // TODO: UI aktualisieren (Zug zeichnen etc.)
-                    console.log("Spiel zuende");
-                    console.log("Game_Over: ", msg)
+                    // console.log("Spiel zuende");
+                    // console.log("Game_Over: ", msg)
                     const status = document.getElementById("status");
                     status.innerText = `Spieler ${msg.winner} hat das Spiel gewonnen`
+
+                    // Sieger-Text
+                    const winnerText =
+                      msg.winner === "D" ? "Unentschieden" : `Spieler ${msg.winner} gewinnt!`;
+
+                    document.getElementById("go_winner").innerText = winnerText;
+
+                    // Spielernamen (falls du sie beim Join gesetzt hast)
+                    document.getElementById("go_player_x").innerText = window.playerXName;
+                    document.getElementById("go_player_o").innerText = window.playerOName;
+
+                    // Modal öffnen
+                    document.getElementById("gameOverDialog").showModal();
+                  }
+
+                if (msg.event === "reset") {
+                  // Kleine Felder leeren & Klassen zurück auf Standard
+                  document.querySelectorAll(".small-field").forEach(cell => {
+                    cell.innerText = "";
+                    cell.className = "aspect-square rounded-lg border border-white/20 bg-[#2A3439] small-field";
+                  });
+
+                  // Großfelder zurück auf Standard
+                  for (let b = 0; b < 9; b++) {
+                    const big = document.getElementById(`field_${b}`);
+                    if (big) {
+                      big.className = "grid grid-cols-3 gap-1 aspect-square rounded-2xl p-1 bg-gradient-to-br from-[#1C2529] to-[#11171A] ring-2 ring-white shadow-xl";
+                    }
+                  }
+
+                  // Status/Turn zurücksetzen
+                  window.currentPlayer = msg.currentPlayer || "X";
+                  document.getElementById("status").innerText = "Spiel neugestartet. Spieler X beginnt.";
+
+                  // Hover-Logik initial (freie Wahl)
+                  document.querySelectorAll(".small-field").forEach(el => {
+                    if (el.innerText.trim() === "") {
+                      el.classList.add("hover:bg-[#37444A]", "cursor-pointer");
+                    }
+                  });
+
+                  // Modal schließen, falls offen
+                  const dlg = document.getElementById("gameOverDialog");
+                  if (dlg && typeof dlg.close === "function") dlg.close();
                 }
+
+                  
+                
 
                 if (msg.event === "error") {
                     alert(msg.message || "Fehler");
@@ -565,6 +655,24 @@
 
             window.socket.addEventListener("close", () => console.log("WS closed (game page)"));
             window.socket.addEventListener("error", (e) => console.error("WS error", e));
+
+            // Buttons
+            document.getElementById("go_quit_btn").addEventListener("click", () => {
+              // Beenden: zurück zur Übersicht o.ä.
+              window.location.href = "/"; // passe an deine Route an
+            });
+
+            document.getElementById("go_restart_btn").addEventListener("click", () => {
+              if (window.socket && window.socket.readyState === WebSocket.OPEN) {
+                window.socket.send(JSON.stringify({ action: "reset" }));
+              }
+            });
+
+            document.getElementById("resetBtn").addEventListener("click", () => {
+              if (window.socket && window.socket.readyState === WebSocket.OPEN) {
+                window.socket.send(JSON.stringify({ action: "reset" }));
+              }
+            });
 
             // 3) Klicks an die WS schicken – Event Delegation ist robust
             const board = document.getElementById("board");
