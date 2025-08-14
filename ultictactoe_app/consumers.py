@@ -226,7 +226,29 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
             # Liste an alle senden
             await self._broadcast_players()
 
-            # Dem Sender seine Join-Bestätigung schicken
+            # # Dem Sender seine Join-Bestätigung schicken
+            # await self.send(text_data=json.dumps({
+            #     "event": "joined",
+            #     "room": self.room,
+            #     "you_are_host": (room["host"] == self.channel_name),
+            #     "your_id": self.channel_name,
+            #     "phase": room.get("phase", "lobby"),
+            #     "your_symbol": room["symbols"][self.channel_name],
+            #     # "board": sorted(list(room.get("board", set()))),  # <- wichtig
+            #     "board": [(int(b), int(s), v)
+            #     for b, cells in room["board"].items()
+            #     for s, v in cells.items()],
+            #     "currentPlayer" : "X",
+            #     "players": room["players"]
+            #         }))
+            # ... in create_or_join nach room["symbols"][self.channel_name] = sym
+
+            # Hilfsabbildung: Symbol -> Name
+            names_by_symbol = {}
+            for ch, s in room["symbols"].items():
+                if s in ("X", "O"):
+                    names_by_symbol[s] = room["players"].get(ch, "")
+
             await self.send(text_data=json.dumps({
                 "event": "joined",
                 "room": self.room,
@@ -234,12 +256,15 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
                 "your_id": self.channel_name,
                 "phase": room.get("phase", "lobby"),
                 "your_symbol": room["symbols"][self.channel_name],
-                # "board": sorted(list(room.get("board", set()))),  # <- wichtig
                 "board": [(int(b), int(s), v)
-                    for b, cells in room["board"].items()
-                    for s, v in cells.items()],
-                            "currentPlayer" : "X",
-                        }))
+                        for b, cells in room["board"].items()
+                        for s, v in cells.items()],
+                "currentPlayer": "X",
+                "players": room["players"],           # {channel_id: nickname}
+                "symbols": room["symbols"],           # {channel_id: "X"|"O"}
+                "names_by_symbol": names_by_symbol,   # {"X": "...", "O": "..."}
+            }))
+
         elif action == "start_game":
             room = rooms.get(self.room)
             if not room:
@@ -435,24 +460,61 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
     # def checkWin():
     #     return
 
+    # async def _broadcast_players(self):
+    #     room = rooms.get(self.room)
+    #     if not room:
+    #         return
+    #     players = [
+    #         {"id": ch, "name": nick, "is_host": (ch == room["host"])}
+    #         for ch, nick in room["players"].items()
+    #     ]
+    #     await self.channel_layer.group_send(
+    #         self.group,
+    #         {"type": "players.update", "players": players, "count": len(players)}
+    #     )
     async def _broadcast_players(self):
         room = rooms.get(self.room)
         if not room:
             return
+
         players = [
             {"id": ch, "name": nick, "is_host": (ch == room["host"])}
             for ch, nick in room["players"].items()
         ]
+
+        # Symbol -> Name vorbereiten
+        names_by_symbol = {}
+        for ch, s in room.get("symbols", {}).items():
+            if s in ("X", "O"):
+                names_by_symbol[s] = room["players"].get(ch, "")
+
         await self.channel_layer.group_send(
             self.group,
-            {"type": "players.update", "players": players, "count": len(players)}
+            {
+                "type": "players.update",
+                "players": players,
+                "count": len(players),
+                "symbols": room.get("symbols", {}),       # <— neu
+                "names_by_symbol": names_by_symbol,       # <— neu
+            }
         )
+
+
+
+    # async def players_update(self, event):
+    #     await self.send(text_data=json.dumps({
+    #         "event": "player_list",
+    #         "players": event["players"],  # [{id, name, is_host}, ...]
+    #         "count": event.get("count"),
+    #     }))
 
     async def players_update(self, event):
         await self.send(text_data=json.dumps({
             "event": "player_list",
-            "players": event["players"],  # [{id, name, is_host}, ...]
+            "players": event["players"],
             "count": event.get("count"),
+            "symbols": event.get("symbols", {}),
+            "names_by_symbol": event.get("names_by_symbol", {}),
         }))
 
     async def game_start(self, event):

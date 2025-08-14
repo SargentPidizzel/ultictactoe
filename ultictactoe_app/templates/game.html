@@ -382,6 +382,8 @@
                     window.myId = msg.your_id;       // falls dein Server das mitsendet
                     window.mySymbol = msg.your_symbol;  // "X" oder "O"
 
+                    console.log("MSG: ", msg)
+
                     const mySymbol = document.getElementById("symbol_you");
                     const oponentSymbol = document.getElementById("symbol_oponent");
 
@@ -412,9 +414,27 @@
                       // el.classList.remove("hover:bg-[#37444A]"); // Hover-Effekt entfernen
                     });
 
-                    
 
-                    // document.getElementById("symbol_oponent").innerText = msg.your_symbol ? "X" |"O"
+                    //NEU 
+                    if (msg.names_by_symbol) {
+                        applyNamesBySymbol(msg.names_by_symbol);
+                      }
+                    }
+
+                    // player_list: Namen & Zuordnung aktualisieren, sobald beide drin sind
+                    if (msg.event === "player_list") {
+                      if (msg.names_by_symbol) {
+                        applyNamesBySymbol(msg.names_by_symbol);
+                      } else {
+                        // Fallback: selbst aus players[] & symbols{} ableiten
+                        const byId = {};
+                        (msg.players || []).forEach(p => byId[p.id] = p.name);
+                        const names = {};
+                        for (const [id, sym] of Object.entries(msg.symbols || {})) {
+                          if (sym === "X" || sym === "O") names[sym] = byId[id] || "";
+                        }
+                        applyNamesBySymbol(names);
+                      }
 
 
 
@@ -702,6 +722,27 @@
             });
         });
         
+    </script>
+
+    <script>
+      function applyNamesBySymbol(names) {
+        // Speichere global für Modal etc.
+        window.playerXName = names?.X || "Spieler X";
+        window.playerOName = names?.O || "Spieler O";
+
+        // UI oben
+        const elNameX = document.getElementById("name_x");
+        const elNameO = document.getElementById("name_o");
+        if (elNameX) elNameX.textContent = window.playerXName;
+        if (elNameO) elNameO.textContent = window.playerOName;
+
+        // Optional "Du/Gegner" falls du es anzeigen willst:
+        const meIsX = window.mySymbol === "X";
+        const youEl = document.getElementById("name_you");
+        const oppEl = document.getElementById("name_opponent");
+        if (youEl) youEl.textContent = meIsX ? window.playerXName : window.playerOName;
+        if (oppEl) oppEl.textContent = meIsX ? window.playerOName : window.playerXName;
+      }
     </script>
 
 </body>
