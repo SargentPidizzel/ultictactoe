@@ -34,10 +34,25 @@
             </div>
         </header>
 
-        <!-- Statusleiste -->
-        <div id="status" class="mb-5 rounded-xl bg-white/5 ring-1 ring-white/10 p-3 text-sm">
-            Spieler <span class="font-semibold" id="playerSpan">X</span> ist dran.
+        <!-- Players -->
+        <div id="players" class="mb-5 rounded-xl bg-white/5 ring-1 ring-white/10 p-3 text-sm flex justify-between">
+            <div id="player1">
+                Du: <span id="symbol_you"></span>
+            </div>
+
+            <div id="status">
+                Spieler <span class="font-semibold" id="playerSpan">X</span> ist dran.
+            </div>
+
+            <div id="player2">
+                Gegner: <span id="symbol_oponent"></span>
+            </div>
         </div>
+
+        <!-- Statusleiste -->
+        <!-- <div id="status" class="mb-5 rounded-xl bg-white/5 ring-1 ring-white/10 p-3 text-sm">
+            Spieler <span class="font-semibold" id="playerSpan">X</span> ist dran.
+        </div> -->
 
         <!-- Spielfeld: 3x3 Großfelder, jedes enthält ein 3x3 Kleinraster -->
         <!-- Spielfeld: 3x3 Großfelder, jedes enthält ein 3x3 Kleinraster -->
@@ -47,23 +62,23 @@
             <!-- Großfeld 0 -->
             <div id="field_0"
                 class="grid grid-cols-3 gap-1 aspect-square rounded-2xl p-1 bg-gradient-to-br from-[#1C2529] to-[#11171A] ring-2 ring-white shadow-xl">
-                <div id="0_0" class="aspect-square rounded-lg border border-white/20 bg-[#2A3439] hover:bg-[#37444A]">
+                <div id="0_0" class="aspect-square rounded-lg border border-white/20 bg-[#2A3439]">
                 </div>
-                <div id="0_1" class="aspect-square rounded-lg border border-white/20 bg-[#2A3439] hover:bg-[#37444A]">
+                <div id="0_1" class="aspect-square rounded-lg border border-white/20 bg-[#2A3439]">
                 </div>
-                <div id="0_2" class="aspect-square rounded-lg border border-white/20 bg-[#2A3439] hover:bg-[#37444A]">
+                <div id="0_2" class="aspect-square rounded-lg border border-white/20 bg-[#2A3439]">
                 </div>
-                <div id="0_3" class="aspect-square rounded-lg border border-white/20 bg-[#2A3439] hover:bg-[#37444A]">
+                <div id="0_3" class="aspect-square rounded-lg border border-white/20 bg-[#2A3439]">
                 </div>
-                <div id="0_4" class="aspect-square rounded-lg border border-white/20 bg-[#2A3439] hover:bg-[#37444A]">
+                <div id="0_4" class="aspect-square rounded-lg border border-white/20 bg-[#2A3439]">
                 </div>
-                <div id="0_5" class="aspect-square rounded-lg border border-white/20 bg-[#2A3439] hover:bg-[#37444A]">
+                <div id="0_5" class="aspect-square rounded-lg border border-white/20 bg-[#2A3439]">
                 </div>
-                <div id="0_6" class="aspect-square rounded-lg border border-white/20 bg-[#2A3439] hover:bg-[#37444A]">
+                <div id="0_6" class="aspect-square rounded-lg border border-white/20 bg-[#2A3439]">
                 </div>
-                <div id="0_7" class="aspect-square rounded-lg border border-white/20 bg-[#2A3439] hover:bg-[#37444A]">
+                <div id="0_7" class="aspect-square rounded-lg border border-white/20 bg-[#2A3439]">
                 </div>
-                <div id="0_8" class="aspect-square rounded-lg border border-white/20 bg-[#2A3439] hover:bg-[#37444A]">
+                <div id="0_8" class="aspect-square rounded-lg border border-white/20 bg-[#2A3439]">
                 </div>
             </div>
 
@@ -323,11 +338,57 @@
 
                 if (msg.event === "joined") {
                     window.myId = msg.your_id;       // falls dein Server das mitsendet
+                    window.mySymbol = msg.your_symbol;  // "X" oder "O"
+
+                    const mySymbol = document.getElementById("symbol_you");
+                    const oponentSymbol = document.getElementById("symbol_oponent");
+
+                    if(msg.your_symbol == "X"){
+                        mySymbol.classList.add('text-red-500')
+                        mySymbol.innerText = msg.your_symbol
+
+                       
+                        oponentSymbol.classList.add('text-green-500')
+                        oponentSymbol.innerText = "O"
+
+                    }else{
+
+                        mySymbol.classList.add('text-green-500')
+                        mySymbol.innerText = msg.your_symbol
+
+                        oponentSymbol.classList.add('text-red-500')
+                        oponentSymbol.innerText = "X"
+
+                    }
+
+                    
+
+                    // document.getElementById("symbol_oponent").innerText = msg.your_symbol ? "X" |"O"
+
+
+
                 }
 
                 if (msg.event === "move") {
+                    window.currentPlayer = msg.currentPlayer; // "X" oder "O"
+
+                    console.log("CurrentPlayer", window,currentPlayer)
+                    console.log("mySymbol", window,mySymbol)
+                    // if (window.currentPlayer && window.mySymbol && window.currentPlayer !== window.mySymbol) {
+                    //     console.log("Nicht dein Zug.");
+                    //     return;
+                    // }
+
+                   
+                    // if (window.currentPlayer !== window.mySymbol) {
+                    //     console.log("Nicht dein Zug.");
+                    //     return;
+                    // }
+
+
                     console.log("Ein zug auf Feld ", msg.big, msg.small);
                     let id = msg.big + "_" + msg.small
+                    
 
                     let field_to_click_id = "field_" + msg.small;
                     const next_big_field = document.getElementById(field_to_click_id);
@@ -335,11 +396,18 @@
                     let clicked_big_field_id = "field_" + msg.big;
                     const clicked_big_field = document.getElementById(clicked_big_field_id);
 
+                    
+
                     console.log("ID: ", id)
                     console.log("MSG ", msg)
                     console.log("Player ", msg.currentPlayer)
 
-                    document.getElementById("playerSpan").innerText = msg.currentPlayer
+                    if(msg.currentPlayer == window.mySymbol){
+                        document.getElementById("status").innerText = "Du bist am zug"
+                    }else{
+                        document.getElementById("status").innerText = `Der Spieler ${msg.currentPlayer} ist am zug`
+
+                    }
 
                     const field = document.getElementById(id);
 
@@ -400,6 +468,12 @@
                     next_big_field.classList.remove('ring-2', 'ring-white', 'shadow-xl');
                     next_big_field.classList.add('ring-2', 'ring-sky-400');
                     next_big_field.classList.add('shadow-lg', 'shadow-sky-400/50');
+
+                    for(o = 0; o < 8 ; o++){
+                        clicked_big_field.classList.remove('hover:bg-[#37444A]', 'cursor-pointer')
+                        document.getElementById(`${msg.big}_${o}`).classList.add('hover:bg-[#37444A]', 'cursor-pointer')
+                        
+                    }
 
 
 
@@ -470,6 +544,7 @@
                 }));
             });
         });
+        
     </script>
 
     <!-- <script>

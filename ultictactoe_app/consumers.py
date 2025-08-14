@@ -142,6 +142,8 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
 
         # Spieler austragen (idempotent)
         room["players"].pop(self.channel_name, None)
+        room.get("symbols", {}).pop(self.channel_name, None)
+
 
         # Wenn gerade ein Start läuft, nicht mehr broadcasten
         if room.get("phase") == "starting":
@@ -185,6 +187,7 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
                     "currentPlayer": "X",   # <-- hier!
                     "big_field_to_click": "",
                     "finished_fields": {},
+                    "symbols": {},  # {channel_name: "X"|"O"}
                 }
 
             room = rooms[self.room]
@@ -193,7 +196,7 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
             if len(room["players"]) >= MAX_PLAYERS:
                 await self.send(text_data=json.dumps({
                     "event": "error",
-                    "message": f"Lobby ist voll (max. {MAX_PLAYERS} Spieler)."
+                    "message": f"Lobby ist voll 1111(max. {MAX_PLAYERS} Spieler)."
                 }))
                 return
             # --------------------
@@ -204,6 +207,21 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
             # Host setzen, falls noch keiner vorhanden
             if room["host"] is None:
                 room["host"] = self.channel_name
+                
+                
+            sym = room["symbols"].get(self.channel_name)
+            if sym is None:
+                taken = set(room["symbols"].values())
+                if "X" not in taken:
+                    sym = "X"
+                elif "O" not in taken:
+                    sym = "O"
+                else:
+                    await self.send(text_data=json.dumps({
+                        "event": "error", "message": "Es sind bereits 2 Spieler verbunden."
+                    }))
+                    return
+                room["symbols"][self.channel_name] = sym
 
             # Liste an alle senden
             await self._broadcast_players()
@@ -215,6 +233,7 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
                 "you_are_host": (room["host"] == self.channel_name),
                 "your_id": self.channel_name,
                 "phase": room.get("phase", "lobby"),
+                "your_symbol": room["symbols"][self.channel_name],
                 # "board": sorted(list(room.get("board", set()))),  # <- wichtig
                 "board": [(int(b), int(s), v)
                     for b, cells in room["board"].items()
@@ -246,26 +265,7 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(
                 self.group, {"type": "game.start", "url": game_url, "board": []}
             )
-        # elif action == "game_move":
-        #     print("Spielzug")
-        #     big = int(data.get("big"))
-        #     small = int(data.get("small"))
-            
-        #     room = rooms[self.room]
-            
-        #     game = room["board"]
-            
-        #     id = f"{big}_{small}"
-            
-        #     if not id in game:
-        #         print(id)
-        #         game.add(f"{big}_{small}")
-
-        #         await self.channel_layer.group_send(
-        #             self.group, {"type": "game.move", "big": big, "small":small, "game":game}
-        #         )
-        #     else:
-        #         print("ID schon drin")
+      
         elif action == "game_move":
             room = rooms.get(self.room)
             if not room:
@@ -275,6 +275,16 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
             #     return
 
             # Field to click in rooms speichern und dann prüfen, ob Big gleich ist. Wenn ja go, sonst nichts
+            
+            my_symbol = room.get("symbols", {}).get(self.channel_name)
+            if my_symbol is None:
+                await self.send(text_data=json.dumps({"event": "error", "message": "Du bist nicht in diesem Spiel."}))
+                return
+
+            if my_symbol != room.get("currentPlayer", "X"):
+                await self.send(text_data=json.dumps({"event": "error", "message": "Du bist nicht dran."}))
+                return
+
             
             big_field_to_click = room["big_field_to_click"]
             print("Jetzt anklicken: ", big_field_to_click)
