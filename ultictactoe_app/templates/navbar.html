@@ -1,0 +1,46 @@
+{% load static %}
+<header class="bg-gray-900 text-white shadow-md">
+  <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+    <!-- Logo -->
+    <a href="/" class="text-2xl font-bold">
+        <img class="h-16 w-auto" src="{% static 'img/logo.png'%}" alt="logo">
+    </a>
+
+    <!-- Desktop Navigation -->
+    <nav class="hidden md:flex space-x-6">
+      <a href="#" class="hover:text-gray-300">Home</a>
+      <a href="#" class="hover:text-gray-300">Über uns</a>
+      <a href="#" class="hover:text-gray-300">Leistungen</a>
+      <a href="#" class="hover:text-gray-300">Kontakt</a>
+    </nav>
+
+    <!-- Mobile Menu Button -->
+    <button id="menu-btn" class="md:hidden focus:outline-none">
+      <svg xmlns="http://www.w3.org/2000/svg" 
+           class="h-6 w-6" fill="none" 
+           viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" 
+              stroke-linejoin="round" 
+              stroke-width="2" 
+              d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Mobile Navigation -->
+  <nav id="mobile-menu" class="hidden md:hidden bg-gray-800 px-4 pb-4">
+    <a href="#" class="block py-2 hover:text-gray-300">Home</a>
+    <a href="#" class="block py-2 hover:text-gray-300">Über uns</a>
+    <a href="#" class="block py-2 hover:text-gray-300">Leistungen</a>
+    <a href="#" class="block py-2 hover:text-gray-300">Kontakt</a>
+  </nav>
+</header>
+
+<script>
+  const menuBtn = document.getElementById("menu-btn");
+  const mobileMenu = document.getElementById("mobile-menu");
+
+  menuBtn.addEventListener("click", () => {
+    mobileMenu.classList.toggle("hidden");
+  });
+</script>

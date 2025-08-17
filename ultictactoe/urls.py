@@ -26,6 +26,7 @@ urlpatterns = [
     # path("chat/", include("chat_app.urls")),
     
     path('play/', include('ultictactoe_app.urls')),
+    path('user/', include('user_app.urls')),
     path("", Index.as_view(), name="index"),
 
 ]

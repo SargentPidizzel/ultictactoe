@@ -10,6 +10,8 @@
 </head>
 
 <body class="bg-[#12181B] text-white">
+    {% include 'navbar.html' %}
+
     <!-- Inhalt, der geblurt werden soll -->
     <div class="min-h-screen flex flex-col items-center justify-center space-y-6">
         <!-- Logo -->
@@ -376,6 +378,8 @@
                     // optional: Modal schließen
                     closeModal('lobbyModal');
                     // Weiterleitung
+                    // window.location.href = msg.url;
+                    try { socket?.close(1000, "redirect"); } catch (e) {}
                     window.location.href = msg.url;
                 }
             };

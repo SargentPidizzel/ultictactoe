@@ -133,31 +133,28 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
 
     #     await self.channel_layer.group_discard(self.group, self.channel_name)
     async def disconnect(self, code):
-        # Erst aus der Gruppe austragen (egal was passiert)
+        # immer erst aus der Gruppe raus
         await self.channel_layer.group_discard(self.group, self.channel_name)
 
         room = rooms.get(self.room)
         if not room:
             return
 
-        # Spieler austragen (idempotent)
+        phase = room.get("phase", "lobby")
+
+        # >>> neu: während Redirect/Spiel NICHT aufräumen
+        if phase in ("starting", "playing"):
+            return
+        # <<<
+
+        # Lobby: Spieler austragen und ggf. Raum löschen
         room["players"].pop(self.channel_name, None)
         room.get("symbols", {}).pop(self.channel_name, None)
 
-
-        # Wenn gerade ein Start läuft, nicht mehr broadcasten
-        if room.get("phase") == "starting":
-            if not room["players"]:
-                rooms.pop(self.room, None)
-            return
-
-        # Normalfall Lobby:
         if room["players"]:
             await self._broadcast_players()
         else:
             rooms.pop(self.room, None)
-
-        await self.channel_layer.group_discard(self.group, self.channel_name)
 
     async def receive(self, text_data):
         """
@@ -177,78 +174,84 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
         if action == "create_or_join":
             nickname = (data.get("nickname") or "Spieler").strip() or "Spieler"
 
-            # Raum anlegen, falls neu – mit eigenem Board/Phase
             if self.room not in rooms:
                 rooms[self.room] = {
-                    "players": {},
-                    "host": None,
+                    "players": {}, "host": None,
                     "board": {i: {} for i in range(9)},
-                    "phase": "lobby",
-                    "currentPlayer": "X",   # <-- hier!
-                    "big_field_to_click": "",
-                    "finished_fields": {},
-                    "symbols": {},  # {channel_name: "X"|"O"}
+                    "phase": "lobby", "currentPlayer": "X",
+                    "big_field_to_click": "", "finished_fields": {},
+                    "symbols": {},
                 }
 
             room = rooms[self.room]
 
-            # --- Limit prüfen ---
+            # >>> neu: Rejoin-Pfad, wenn Spiel im Gange / Redirect
+            if room.get("phase") in ("starting", "playing") and "symbol_by_name" in room:
+                desired = room["symbol_by_name"].get(nickname)
+                if desired in ("X", "O"):
+                    # alten Channel für dieses Symbol entfernen
+                    for ch, s in list(room["symbols"].items()):
+                        if s == desired:
+                            room["symbols"].pop(ch, None)
+                            room["players"].pop(ch, None)
+                    # aktuellen Channel setzen
+                    room["players"][self.channel_name] = nickname
+                    room["symbols"][self.channel_name] = desired
+                    # Host beibehalten, falls noch keiner
+                    if room["host"] is None:
+                        room["host"] = self.channel_name
+
+                    # vollständige Bestätigung zurück
+                    names_by_symbol = {
+                        s: room["players"].get(ch, "")
+                        for ch, s in room["symbols"].items() if s in ("X","O")
+                    }
+                    await self._broadcast_players()
+                    await self.send(text_data=json.dumps({
+                        "event": "joined",
+                        "room": self.room,
+                        "you_are_host": (room["host"] == self.channel_name),
+                        "your_id": self.channel_name,
+                        "phase": room.get("phase"),
+                        "your_symbol": room["symbols"][self.channel_name],
+                        "board": [(int(b), int(s), v)
+                                for b, cells in room["board"].items()
+                                for s, v in cells.items()],
+                        "currentPlayer": room.get("currentPlayer", "X"),
+                        "players": room["players"],
+                        "symbols": room["symbols"],
+                        "names_by_symbol": names_by_symbol,
+                    }))
+                    return
+            # <<< Rejoin-Pfad Ende
+
+            # --- normaler Lobby-Join wie gehabt (MAX_PLAYERS etc.) ---
+            # MAX_PLAYERS = 2
             if len(room["players"]) >= MAX_PLAYERS:
                 await self.send(text_data=json.dumps({
-                    "event": "error",
-                    "message": f"Lobby ist voll 1111(max. {MAX_PLAYERS} Spieler)."
+                    "event":"error","message":f"Lobby ist voll (max. {MAX_PLAYERS})."
                 }))
                 return
-            # --------------------
 
-            # Spieler hinzufügen
             room["players"][self.channel_name] = nickname
-
-            # Host setzen, falls noch keiner vorhanden
             if room["host"] is None:
                 room["host"] = self.channel_name
-                
-                
+
             sym = room["symbols"].get(self.channel_name)
             if sym is None:
                 taken = set(room["symbols"].values())
-                if "X" not in taken:
-                    sym = "X"
-                elif "O" not in taken:
-                    sym = "O"
-                else:
-                    await self.send(text_data=json.dumps({
-                        "event": "error", "message": "Es sind bereits 2 Spieler verbunden."
-                    }))
+                sym = "X" if "X" not in taken else ("O" if "O" not in taken else None)
+                if not sym:
+                    await self.send(text_data=json.dumps({"event":"error","message":"Es sind bereits 2 Spieler verbunden."}))
                     return
                 room["symbols"][self.channel_name] = sym
 
-            # Liste an alle senden
             await self._broadcast_players()
 
-            # # Dem Sender seine Join-Bestätigung schicken
-            # await self.send(text_data=json.dumps({
-            #     "event": "joined",
-            #     "room": self.room,
-            #     "you_are_host": (room["host"] == self.channel_name),
-            #     "your_id": self.channel_name,
-            #     "phase": room.get("phase", "lobby"),
-            #     "your_symbol": room["symbols"][self.channel_name],
-            #     # "board": sorted(list(room.get("board", set()))),  # <- wichtig
-            #     "board": [(int(b), int(s), v)
-            #     for b, cells in room["board"].items()
-            #     for s, v in cells.items()],
-            #     "currentPlayer" : "X",
-            #     "players": room["players"]
-            #         }))
-            # ... in create_or_join nach room["symbols"][self.channel_name] = sym
-
-            # Hilfsabbildung: Symbol -> Name
-            names_by_symbol = {}
-            for ch, s in room["symbols"].items():
-                if s in ("X", "O"):
-                    names_by_symbol[s] = room["players"].get(ch, "")
-
+            names_by_symbol = {
+                s: room["players"].get(ch, "")
+                for ch, s in room["symbols"].items() if s in ("X","O")
+            }
             await self.send(text_data=json.dumps({
                 "event": "joined",
                 "room": self.room,
@@ -259,36 +262,39 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
                 "board": [(int(b), int(s), v)
                         for b, cells in room["board"].items()
                         for s, v in cells.items()],
-                "currentPlayer": "X",
-                "players": room["players"],           # {channel_id: nickname}
-                "symbols": room["symbols"],           # {channel_id: "X"|"O"}
-                "names_by_symbol": names_by_symbol,   # {"X": "...", "O": "..."}
+                "currentPlayer": room.get("currentPlayer","X"),
+                "players": room["players"],
+                "symbols": room["symbols"],
+                "names_by_symbol": names_by_symbol,
             }))
 
         elif action == "start_game":
             room = rooms.get(self.room)
-            if not room:
-                return
+            if not room: return
             if room["host"] != self.channel_name:
-                await self.send(text_data=json.dumps({"event": "error", "message": "Nur der Host darf starten."}))
+                await self.send(text_data=json.dumps({"event":"error","message":"Nur der Host darf starten."}))
                 return
             if len(room["players"]) < 2:
-                await self.send(text_data=json.dumps({"event": "error", "message": "Mindestens 2 Spieler nötig."}))
+                await self.send(text_data=json.dumps({"event":"error","message":"Mindestens 2 Spieler nötig."}))
                 return
 
-            # room["phase"] = "starting"  # <— wichtig
-            # Phase & Board zurücksetzen
-            # current_player = rooms[self.room].setdefault("currentPlayer", "X")
-            room["phase"] = "playing"
-            # room["board"] = set()
-            room["board"] = {i: {} for i in range(9)}   # statt: set()
-            room["currentPlayer"] = "X"
-            print("Start Spiel")
-            # room[""]
+            # >>> neu:
+            room["phase"] = "starting"
+            room["symbol_by_name"] = {}
+            for ch, sym in room.get("symbols", {}).items():
+                nick = room["players"].get(ch)
+                if nick and sym in ("X","O"):
+                    room["symbol_by_name"][nick] = sym
+            # <<<
 
-            game_url = f"/play/lobby/{self.room}/"  # oder dein Game-Pfad
+            # Board & Status für Spiel vorbereiten
+            room["board"] = {i: {} for i in range(9)}
+            room["currentPlayer"] = "X"
+
+            game_url = f"/play/lobby/{self.room}/"
             await self.channel_layer.group_send(
-                self.group, {"type": "game.start", "url": game_url, "board": []}
+                self.group,
+                {"type": "game.start", "url": game_url, "board": []}
             )
       
         elif action == "game_move":
@@ -453,6 +459,32 @@ class GameLobbyConsumer(AsyncWebsocketConsumer):
                     "message": "Spiel wurde neugestartet.",
                 }
             )
+        elif action == "get_state":
+            room = rooms.get(self.room)
+            if not room:
+                await self.send(text_data=json.dumps({"event": "error", "message": "Raum existiert nicht."}))
+                return
+
+            # Symbol->Name Abbildung frisch ableiten
+            names_by_symbol = {}
+            for ch, s in room["symbols"].items():
+                if s in ("X", "O"):
+                    names_by_symbol[s] = room["players"].get(ch, "")
+
+            await self.send(text_data=json.dumps({
+                "event": "state",
+                "room": self.room,
+                "phase": room.get("phase", "lobby"),
+                "your_id": self.channel_name,
+                "your_symbol": room["symbols"].get(self.channel_name),  # kann None sein, wenn diese Verbindung nur „Zuschauen“ ist
+                "players": room["players"],
+                "symbols": room["symbols"],
+                "names_by_symbol": names_by_symbol,
+                "board": [(int(b), int(s), v)
+                        for b, cells in room["board"].items()
+                        for s, v in cells.items()],
+                "currentPlayer": room.get("currentPlayer", "X"),
+            }))
 
 
         # Weitere Actions (start/move/leave) kommen später

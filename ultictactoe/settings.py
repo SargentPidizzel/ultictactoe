@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     'tailwind',
     'theme',
     'ultictactoe_app',
-    'chat_app', 
+    'chat_app',
+    'user_app',
 ]
 TAILWIND_APP_NAME = 'theme'
 
