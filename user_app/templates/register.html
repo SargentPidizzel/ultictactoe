@@ -1,0 +1,99 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrieren</title>
+  {% include 'head.html' %}
+</head>
+<body class="bg-[#12181B] text-white">
+  {% include 'navbar.html' %}
+
+  <div class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-128 max-w-md rounded-3xl bg-white dark:bg-neutral-900 
+                text-neutral-900 dark:text-neutral-100 shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
+
+      <div class="flex items-start gap-4 p-6">
+        <div class="shrink-0 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 p-3 ring-1 ring-emerald-500/20">
+          ✨
+        </div>
+        <div class="flex-1">
+          <h2 class="text-2xl font-bold tracking-tight">Konto erstellen</h2>
+          <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Lege ein neues Konto an.</p>
+        </div>
+      </div>
+
+      <div class="px-6 pb-6">
+        <!-- Messages (falls noch nicht global eingebunden) -->
+        {% if messages %}
+          <div class="mb-4 space-y-2">
+            {% for message in messages %}
+              <div class="rounded-xl px-4 py-2 text-sm
+                          {% if message.tags == 'error' %}bg-red-500/10 text-red-200 ring-1 ring-red-500/20{% endif %}
+                          {% if message.tags == 'success' %}bg-emerald-500/10 text-emerald-200 ring-1 ring-emerald-500/20{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <form method="POST" class="space-y-5">
+          {% csrf_token %}
+
+          <div class="relative">
+            <input id="register_username" name="username" type="text" autocomplete="username" placeholder="Nutzername"
+                   class="w-full pl-10 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800
+                          text-neutral-900 dark:text-neutral-100 px-4 py-3 text-base shadow-sm
+                          focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition" />
+          </div>
+
+          <!-- optional -->
+          <div class="relative">
+            <input id="register_email" name="email" type="email" autocomplete="email" placeholder="E-Mail (optional)"
+                   class="w-full pl-10 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800
+                          text-neutral-900 dark:text-neutral-100 px-4 py-3 text-base shadow-sm
+                          focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition" />
+          </div>
+
+          <div class="relative">
+            <input id="register_password1" name="password1" type="password" autocomplete="new-password" placeholder="Passwort"
+                   class="w-full pl-10 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800
+                          text-neutral-900 dark:text-neutral-100 px-4 py-3 text-base shadow-sm
+                          focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition" />
+            <p class="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+              Mindestens 8 Zeichen, keine zu einfachen Passwörter.
+            </p>
+          </div>
+
+          <div class="relative">
+            <input id="register_password2" name="password2" type="password" autocomplete="new-password" placeholder="Passwort bestätigen"
+                   class="w-full pl-10 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800
+                          text-neutral-900 dark:text-neutral-100 px-4 py-3 text-base shadow-sm
+                          focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition" />
+          </div>
+
+          <button type="submit"
+                  class="w-full rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 text-base font-semibold shadow-lg transition">
+            Registrieren
+          </button>
+        </form>
+
+        <div class="my-6 flex items-center gap-3">
+          <div class="h-px flex-1 bg-neutral-200 dark:bg-neutral-800"></div>
+          <span class="text-xs uppercase tracking-wider text-neutral-400">oder</span>
+          <div class="h-px flex-1 bg-neutral-200 dark:bg-neutral-800"></div>
+        </div>
+
+        <div class="text-center">
+          <a href="{% url 'login' %}"
+             class="inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium
+                    text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition">
+            Bereits einen Account? Anmelden
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

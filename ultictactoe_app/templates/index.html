@@ -121,35 +121,49 @@
                 </div>
 
                 <!-- Body -->
+                <!-- Body -->
                 <div class="px-6 pb-6">
                     <form id="joinForm" class="space-y-4" onsubmit="handleJoinSubmit(event)">
-                        <!-- Eingabefeld oben -->
                         <input id="username_join" type="text" placeholder="Username eingeben"
-                            class="w-full rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800
-                                text-neutral-900 dark:text-neutral-100 px-4 py-3 text-base shadow-sm
-                                focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition" />
-                        <input id="joinCode" type="text" placeholder="Game-Code eingeben"
-                            class="w-full rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800
+                        class="w-full rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800
                                 text-neutral-900 dark:text-neutral-100 px-4 py-3 text-base shadow-sm
                                 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition" />
 
-                        <!-- Beitreten-Button unten -->
+                        <input id="joinCode" type="text" placeholder="Game-Code eingeben"
+                        class="w-full rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800
+                                text-neutral-900 dark:text-neutral-100 px-4 py-3 text-base shadow-sm
+                                focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition" />
+
+                        <!-- Primärer CTA -->
                         <button type="submit"
-                            class="w-full rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 text-base font-semibold shadow-lg transition">
-                            Beitreten
+                        class="w-full rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 text-base font-semibold shadow-lg transition">
+                        Beitreten
                         </button>
                     </form>
 
-                    <div class="my-6 flex items-center gap-3">
-                        <div class="h-px flex-1 bg-neutral-200 dark:bg-neutral-800"></div>
-                        <span class="text-xs uppercase tracking-wider text-neutral-400">oder</span>
-                        <div class="h-px flex-1 bg-neutral-200 dark:bg-neutral-800"></div>
-                    </div>
+                    <!-- sehr dezente Auth-Links -->
+                    <p class="mt-2 text-center text-xs text-neutral-500 dark:text-neutral-400">
+                        Schon einen Account?
+                        <a href="/user/login" data-close
+                            class="underline underline-offset-4 hover:no-underline hover:text-emerald-600 dark:hover:text-emerald-400 transition">
+                            Login
+                        </a>
+                        <span class="mx-1 text-neutral-300 dark:text-neutral-600">·</span>
+                        <button type="button" data-close
+                            class="underline underline-offset-4 hover:no-underline hover:text-emerald-600 dark:hover:text-emerald-400 transition">
+                            Registrieren
+                        </button>
+                    </p>
 
+                    <!-- Spacer, damit Cancel unten steht -->
+                    <div class="mt-6"></div>
+
+                    <!-- Abbrechen: zentral & leichtgewichtig -->
                     <div class="flex justify-center">
-                        <button data-close
-                            class="rounded-lg px-4 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition">
-                            Abbrechen
+                        <button type="button" data-close aria-label="Modal schließen"
+                        class="rounded-lg px-5 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-300
+                                hover:bg-neutral-100 dark:hover:bg-neutral-800 transition">
+                        Abbrechen
                         </button>
                     </div>
                 </div>
@@ -190,30 +204,47 @@
                 </div>
 
                 <!-- Body -->
+                <!-- Body -->
                 <div class="px-6 pb-6">
                     <form id="createForm" class="space-y-4" onsubmit="handleCreateSubmit(event)">
                         <input id="username_create" type="text" placeholder="Username eingeben"
-                            class="w-full rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800
+                        class="w-full rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800
                                 text-neutral-900 dark:text-neutral-100 px-4 py-3 text-base shadow-sm
                                 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition" />
+
                         <button type="submit"
-                            class="w-full rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 text-base font-semibold shadow-lg transition">
-                            Erstellen
+                        class="w-full rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 text-base font-semibold shadow-lg transition">
+                        Erstellen
                         </button>
                     </form>
 
-                    <div class="my-6 flex items-center gap-3">
-                        <div class="h-px flex-1 bg-neutral-200 dark:bg-neutral-800"></div>
-                        <span class="text-xs uppercase tracking-wider text-neutral-400">oder</span>
-                        <div class="h-px flex-1 bg-neutral-200 dark:bg-neutral-800"></div>
-                    </div>
+                    <!-- sehr dezente Auth-Links -->
+                    <p class="mt-2 text-center text-xs text-neutral-500 dark:text-neutral-400">
+                        Schon einen Account?
+                        <a href="/user/login" data-close
+                            class="underline underline-offset-4 hover:no-underline hover:text-emerald-600 dark:hover:text-emerald-400 transition">
+                            Login
+                        </a>
+                        <span class="mx-1 text-neutral-300 dark:text-neutral-600">·</span>
+                        <button type="button" data-close
+                        class="underline underline-offset-4 hover:no-underline hover:text-emerald-600 dark:hover:text-emerald-400 transition">
+                        Registrieren
+                        </button>
+                    </p>
 
+                    <!-- Spacer, damit Cancel optisch ans Ende rückt -->
+                    <div class="mt-6"></div>
+
+                    <!-- Abbrechen: zentral & leichtgewichtig -->
                     <div class="flex justify-center">
-                        <button data-close
-                            class="rounded-lg px-4 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition">
-                            Abbrechen
+                        <button type="button" data-close aria-label="Modal schließen"
+                        class="rounded-lg px-5 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-300
+                                hover:bg-neutral-100 dark:hover:bg-neutral-800 transition">
+                        Abbrechen
                         </button>
                     </div>
+                </div>
+
                 </div>
             </div>
         </div>
